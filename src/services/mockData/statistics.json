@@ -1,0 +1,12 @@
+{
+  "totalTasks": 5,
+  "completedToday": 1,
+  "completedThisWeek": 2,
+  "completionRate": 20,
+  "currentStreak": 3,
+  "tasksByCategory": {
+    "work": 2,
+    "personal": 1,
+    "health": 2
+  }
+}
