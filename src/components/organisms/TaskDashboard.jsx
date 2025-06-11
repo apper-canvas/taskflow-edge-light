@@ -218,77 +218,48 @@ const TaskDashboard = () => {
     loadData();
   }, []);
 
-  const loadData = async () => {
-    try {
-      await Promise.all([
-        loadTasks(),
-        loadCategories(),
-        loadStatistics()
-      ]);
-    } catch (err) {
-      // Individual errors are handled by hooks
-      console.error('Failed to load initial data:', err);
-    }
+const loadData = async () => {
+    // Load all data - individual hooks handle their own error states
+    loadTasks();
+    loadCategories();
+    loadStatistics();
   };
 
   // Helper function to refresh statistics
-  const refreshStatistics = async () => {
-    try {
-      await loadStatistics();
-    } catch (err) {
-      // Error handling is done in the hook
-      console.error('Failed to refresh statistics:', err);
-    }
+  const refreshStatistics = () => {
+    loadStatistics();
   };
 
   const handleCreateTask = async (taskData) => {
-    try {
-      await createTask(taskData);
-      await refreshStatistics();
-    } catch (err) {
-      // Error handling is done in the hook
-    }
+    await createTask(taskData);
+    refreshStatistics();
   };
 
   const handleUpdateTask = async (id, updates) => {
-    try {
-      await updateTask(id, updates);
-      if (updates.completed !== undefined) {
-        await refreshStatistics();
-      }
-    } catch (err) {
-      // Error handling is done in the hook
+    await updateTask(id, updates);
+    // Only refresh statistics if completion status changed
+    if (updates.completed !== undefined) {
+      refreshStatistics();
     }
   };
 
   const handleDeleteTask = async (id) => {
-    try {
-      await deleteTask(id);
-      await refreshStatistics();
-    } catch (err) {
-      // Error handling is done in the hook
-    }
+    await deleteTask(id);
+    refreshStatistics();
   };
 
   const handleCreateCategory = async (categoryData) => {
-    try {
-      await createCategory(categoryData);
-    } catch (err) {
-      // Error handling is done in the hook
-    }
-  };
+    await createCategory(categoryData);
+};
 
   const handleDeleteCategory = async (id) => {
-    try {
-      await deleteCategory(id);
-    } catch (err) {
-      // Error handling is done in the hook
-    }
-};
+    await deleteCategory(id);
+  };
 
   const handleFilterChange = (newFilters) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
   };
+  
   const getCategoryById = useMemo(() => {
     const categoryMap = new Map();
     categories.forEach(cat => categoryMap.set(cat.id, cat));
