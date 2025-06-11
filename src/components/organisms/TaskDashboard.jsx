@@ -11,13 +11,191 @@ import ApperIcon from '@/components/ApperIcon';
 import Button from '@/components/atoms/Button';
 import { motion } from 'framer-motion';
 
-const TaskDashboard = () => {
+// Custom hooks for data management
+const useTaskData = () => {
   const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const loadTasks = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const tasksData = await taskService.getAll();
+      setTasks(tasksData);
+      return tasksData;
+    } catch (err) {
+      const errorMessage = err.message || 'Failed to load tasks';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createTask = async (taskData) => {
+    try {
+      const newTask = await taskService.create(taskData);
+      setTasks(prev => [newTask, ...prev]);
+      toast.success('Task created successfully');
+      return newTask;
+    } catch (err) {
+      toast.error('Failed to create task');
+      throw err;
+    }
+  };
+
+  const updateTask = async (id, updates) => {
+    try {
+      const updatedTask = await taskService.update(id, updates);
+      setTasks(prev => prev.map(task => task.id === id ? updatedTask : task));
+      if (updates.completed !== undefined) {
+        toast.success(updates.completed ? 'Task completed!' : 'Task marked as pending');
+      } else {
+        toast.success('Task updated');
+      }
+      return updatedTask;
+    } catch (err) {
+      toast.error('Failed to update task');
+      throw err;
+    }
+  };
+
+  const deleteTask = async (id) => {
+    try {
+      await taskService.delete(id);
+      setTasks(prev => prev.filter(task => task.id !== id));
+      toast.success('Task deleted');
+    } catch (err) {
+      toast.error('Failed to delete task');
+      throw err;
+    }
+  };
+
+  return {
+    tasks,
+    loading,
+    error,
+    loadTasks,
+    createTask,
+    updateTask,
+    deleteTask
+  };
+};
+
+const useCategoryData = () => {
   const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const loadCategories = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const categoriesData = await categoryService.getAll();
+      setCategories(categoriesData);
+      return categoriesData;
+    } catch (err) {
+      const errorMessage = err.message || 'Failed to load categories';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createCategory = async (categoryData) => {
+    try {
+      const newCategory = await categoryService.create(categoryData);
+      setCategories(prev => [...prev, newCategory]);
+      toast.success('Category created');
+      return newCategory;
+    } catch (err) {
+      toast.error('Failed to create category');
+      throw err;
+    }
+  };
+
+  const deleteCategory = async (id) => {
+    try {
+      await categoryService.delete(id);
+      setCategories(prev => prev.filter(cat => cat.id !== id));
+      toast.success('Category deleted');
+    } catch (err) {
+      toast.error('Failed to delete category');
+      throw err;
+    }
+  };
+
+  return {
+    categories,
+    loading,
+    error,
+    loadCategories,
+    createCategory,
+    deleteCategory
+  };
+};
+
+const useStatistics = () => {
   const [statistics, setStatistics] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  
+
+  const loadStatistics = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const statsData = await statisticsService.getAll();
+      setStatistics(statsData);
+      return statsData;
+    } catch (err) {
+      const errorMessage = err.message || 'Failed to load statistics';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    statistics,
+    loading,
+    error,
+    loadStatistics
+  };
+};
+
+const TaskDashboard = () => {
+  const {
+    tasks,
+    loading: tasksLoading,
+    error: tasksError,
+    loadTasks,
+    createTask,
+    updateTask,
+    deleteTask
+  } = useTaskData();
+
+  const {
+    categories,
+    loading: categoriesLoading,
+    error: categoriesError,
+    loadCategories,
+    createCategory,
+    deleteCategory
+  } = useCategoryData();
+
+  const {
+    statistics,
+    loading: statisticsLoading,
+    error: statisticsError,
+    loadStatistics
+  } = useStatistics();
+
   // UI State
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -31,98 +209,86 @@ const TaskDashboard = () => {
     showCompleted: false,
   });
 
+  // Combined loading and error states
+  const loading = tasksLoading || categoriesLoading || statisticsLoading;
+  const error = tasksError || categoriesError || statisticsError;
+
   // Load initial data
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
-    setLoading(true);
-    setError(null);
     try {
-      const [tasksData, categoriesData, statsData] = await Promise.all([
-        taskService.getAll(),
-        categoryService.getAll(),
-        statisticsService.getAll()
+      await Promise.all([
+        loadTasks(),
+        loadCategories(),
+        loadStatistics()
       ]);
-      setTasks(tasksData);
-      setCategories(categoriesData);
-      setStatistics(statsData);
     } catch (err) {
-      setError(err.message || 'Failed to load data');
-      toast.error('Failed to load data');
-    } finally {
-      setLoading(false);
+      // Individual errors are handled by hooks
+      console.error('Failed to load initial data:', err);
+    }
+  };
+
+  // Helper function to refresh statistics
+  const refreshStatistics = async () => {
+    try {
+      await loadStatistics();
+    } catch (err) {
+      // Error handling is done in the hook
+      console.error('Failed to refresh statistics:', err);
     }
   };
 
   const handleCreateTask = async (taskData) => {
     try {
-      const newTask = await taskService.create(taskData);
-      setTasks(prev => [newTask, ...prev]);
-      toast.success('Task created successfully');
-      // Refresh statistics
-      const stats = await statisticsService.getAll();
-      setStatistics(stats);
+      await createTask(taskData);
+      await refreshStatistics();
     } catch (err) {
-      toast.error('Failed to create task');
+      // Error handling is done in the hook
     }
   };
 
   const handleUpdateTask = async (id, updates) => {
     try {
-      const updatedTask = await taskService.update(id, updates);
-      setTasks(prev => prev.map(task => task.id === id ? updatedTask : task));
+      await updateTask(id, updates);
       if (updates.completed !== undefined) {
-        toast.success(updates.completed ? 'Task completed!' : 'Task marked as pending');
-        // Refresh statistics
-        const stats = await statisticsService.getAll();
-        setStatistics(stats);
-      } else {
-        toast.success('Task updated');
+        await refreshStatistics();
       }
     } catch (err) {
-      toast.error('Failed to update task');
+      // Error handling is done in the hook
     }
   };
 
   const handleDeleteTask = async (id) => {
     try {
-      await taskService.delete(id);
-      setTasks(prev => prev.filter(task => task.id !== id));
-      toast.success('Task deleted');
-      // Refresh statistics
-      const stats = await statisticsService.getAll();
-      setStatistics(stats);
+      await deleteTask(id);
+      await refreshStatistics();
     } catch (err) {
-      toast.error('Failed to delete task');
+      // Error handling is done in the hook
     }
   };
 
   const handleCreateCategory = async (categoryData) => {
     try {
-      const newCategory = await categoryService.create(categoryData);
-      setCategories(prev => [...prev, newCategory]);
-      toast.success('Category created');
+      await createCategory(categoryData);
     } catch (err) {
-      toast.error('Failed to create category');
+      // Error handling is done in the hook
     }
   };
 
   const handleDeleteCategory = async (id) => {
     try {
-      await categoryService.delete(id);
-      setCategories(prev => prev.filter(cat => cat.id !== id));
-      toast.success('Category deleted');
+      await deleteCategory(id);
     } catch (err) {
-      toast.error('Failed to delete category');
+      // Error handling is done in the hook
     }
-  };
+};
 
   const handleFilterChange = (newFilters) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
   };
-
   const getCategoryById = useMemo(() => {
     const categoryMap = new Map();
     categories.forEach(cat => categoryMap.set(cat.id, cat));
