@@ -5,7 +5,7 @@ import { format, isToday, isPast, parseISO } from 'date-fns';
 import PropTypes from 'prop-types';
 
 const TaskListItem = ({ task, category, onToggleComplete, onEdit, onDelete, index }) => {
-  const isOverdue = task.dueDate && isPast(parseISO(task.dueDate)) && !task.completed;
+const isOverdue = task.due_date && isPast(parseISO(task.due_date)) && !task.completed;
 
   const getPriorityIcon = (priority) => {
     switch (priority) {
@@ -97,21 +97,20 @@ const TaskListItem = ({ task, category, onToggleComplete, onEdit, onDelete, inde
                 )}
                 
                 {/* Due Date */}
-                {task.dueDate && (
+{task.due_date && (
                   <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                     isOverdue 
                       ? 'bg-error text-white'
-                      : isToday(parseISO(task.dueDate))
+                      : isToday(parseISO(task.due_date))
                         ? 'bg-warning text-white'
                         : 'bg-gray-100 text-gray-700'
-                  }`}>
+}`}>
                     <ApperIcon name="Calendar" size={12} className="mr-1" />
-                    {format(parseISO(task.dueDate), 'MMM d')}
+                    {format(parseISO(task.due_date), 'MMM d')}
                   </span>
                 )}
               </div>
             </div>
-            
             {/* Actions */}
             <div className="flex items-center space-x-2 ml-4">
               <motion.button

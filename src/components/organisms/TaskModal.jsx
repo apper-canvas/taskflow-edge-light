@@ -15,14 +15,14 @@ const TaskModal = ({ isOpen, onClose, task, categories, onSubmit }) => {
     dueDate: ''
   });
 
-  useEffect(() => {
+useEffect(() => {
     if (task) {
       setFormData({
-        title: task.title,
+        title: task.title || '',
         description: task.description || '',
-        categoryId: task.categoryId || '',
-        priority: task.priority,
-        dueDate: task.dueDate ? format(parseISO(task.dueDate), 'yyyy-MM-dd') : ''
+        categoryId: task.category_id || '',
+        priority: task.priority || 'medium',
+        dueDate: task.due_date ? format(parseISO(task.due_date), 'yyyy-MM-dd') : ''
       });
     } else {
       setFormData({
@@ -55,11 +55,11 @@ const TaskModal = ({ isOpen, onClose, task, categories, onSubmit }) => {
 
   if (!isOpen) return null;
 
-  const categoryOptions = [
+const categoryOptions = [
     { value: '', label: 'No category' },
-    ...categories.map(category => ({
+    ...(categories || []).map(category => ({
       value: category.id,
-      label: `${category.icon} ${category.name}`
+      label: `${category.icon || ''} ${category.name || 'Unnamed Category'}`
     }))
   ];
 

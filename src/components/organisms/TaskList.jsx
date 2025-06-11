@@ -47,12 +47,12 @@ const TaskList = ({ tasks, getCategoryById, onToggleComplete, onEditTask, onDele
           />
         ) : (
           <div className="space-y-3">
-            <AnimatePresence>
+<AnimatePresence>
               {tasks.map((task, index) => (
                 <TaskListItem
                   key={task.id}
                   task={task}
-                  category={getCategoryById(task.categoryId)}
+                  category={getCategoryById(task.category_id)}
                   onToggleComplete={onToggleComplete}
                   onEdit={onEditTask}
                   onDelete={onDeleteTask}

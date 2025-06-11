@@ -269,10 +269,10 @@ const loadData = async () => {
   // Filter tasks based on current filters
   const filteredTasks = useMemo(() => {
     const { searchQuery, selectedCategory, selectedPriority, showCompleted } = filters;
-    return tasks.filter(task => {
+return tasks.filter(task => {
       const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            task.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === 'all' || task.categoryId === selectedCategory;
+                            (task.description || '').toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = selectedCategory === 'all' || task.category_id === selectedCategory;
       const matchesPriority = selectedPriority === 'all' || task.priority === selectedPriority;
       const matchesStatus = showCompleted ? task.completed : !task.completed;
       
